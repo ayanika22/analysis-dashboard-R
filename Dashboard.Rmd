@@ -1,0 +1,124 @@
+---
+title: "Sales Dashboard of Global Superstore"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    #vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(highcharter)                  
+library(gt)                  
+library(htmltools)                
+library(viridis) 
+library(dplyr)
+library(maps)
+library(ggplot2)
+
+df <- read_csv('Superstore.csv', show_col_types = FALSE)
+
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Most Popular Products
+
+```{r}
+# Colors
+custom_colors <- viridis::mako(n = 15)
+
+# Most popular authors by reviews
+df %>% 
+  group_by(`Product Name`) %>% 
+  summarise(Sales = sum(Sales)) %>% 
+  arrange(desc(Sales)) %>% 
+  head(15) %>% 
+  hchart('column', hcaes(x = `Product Name`, y = Sales,color = custom_colors)) %>%   hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat = '<b>Total Sales: </b> {point.y} <br>') %>% 
+  hc_title(text = 'Most Popular Products',
+           style = list(fontSize = '25px', fontWeight = 'bold')) %>% 
+  hc_subtitle(text = 'By Total Sales',
+              style = list(fontSize = '16px'))
+
+```
+
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+
+### Most Profitable Products
+
+```{r}
+# Colors
+custom_colors <- viridis::plasma(n = 10)
+
+df %>% 
+  arrange(desc(Profit)) %>% 
+  head(10) %>% 
+  hchart('bar', hcaes(x = `Product Name`, y = Profit, color = custom_colors)) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat = '<b>Total Profit: </b> {point.y} <br>') %>% 
+  hc_title(text = 'Most Profitable products',
+           style = list(fontSize = '25px', fontWeight = 'bold')) %>% 
+  hc_subtitle(text = 'By Profit',
+              style = list(fontSize = '16px')) 
+ 
+
+```
+### Sales by month
+```{r}
+
+df1<-df %>% 
+  separate(`Order Date`, sep="-", into = c("day", "month", "year")) %>%
+  arrange(year, month)
+  
+
+df1 %>% mutate(month, "%m") %>%
+    group_by(Sales, month) %>% 
+    summarize(Sales) %>%
+    ggplot(mapping=aes(x=month, y=Sales, col=month)) + geom_line()
+```
+
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+### Sales By Segment
+
+```{r}
+# Colors
+custom_colors <- viridis::mako(n = 3)
+
+# Most common genre
+df %>% 
+  group_by(Segment) %>% 
+  summarise(count = n()) %>% 
+  hchart('pie', hcaes(x = Segment, y = count, color = custom_colors)) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat='<b>Proportion: </b> {point.percentage:,.2f}%') %>% 
+  hc_title(text = 'Sales By Segment',
+           style = list(fontSize = '15px', fontWeight = 'bold'))
+  
+```
+
+
+### Sales by market
+
+```{r}
+custom_colors <- viridis::mako(n = 7)
+df %>% 
+  group_by(Market) %>% 
+  summarise(count = n()) %>% 
+  hchart('pie', innerSize = "60%", hcaes(x = Market, y = count, color = custom_colors)) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat='<b>Proportion: </b> {point.percentage:,.2f}%') %>% 
+  hc_title(text = 'Sales by market',
+           style = list(fontSize = '15px', fontWeight = 'bold'))  
+  
+```
+
+
+```
+
